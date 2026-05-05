@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>kiduki</title>
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body>
+  <h2>園児を選択</h2>
+  <div id="children"></div>
+
+  <h2>スタンプ</h2>
+  <div id="stamps"></div>
+
+  <h2>履歴</h2>
+  <ul id="log"></ul>
+
+  <script>
+    const children = ["Aちゃん", "Bくん", "Cちゃん"];
+    const stamps = ["衝突", "笑う", "一人", "関わり", "困る", "気になる"];
+
+    let selectedChild = null;
+    let logs = JSON.parse(localStorage.getItem("logs") || "[]");
+
+    const childDiv = document.getElementById("children");
+    const stampDiv = document.getElementById("stamps");
+    const logDiv = document.getElementById("log");
+
+    function renderLogs() {
+      logDiv.innerHTML = "";
+      logs.forEach(l => {
+        const li = document.createElement("li");
+        li.textContent = `${l.time} ${l.child} - ${l.stamp}`;
+        logDiv.appendChild(li);
+      });
+    }
+
+    children.forEach(c => {
+      const btn = document.createElement("button");
+      btn.textContent = c;
+      btn.onclick = () => selectedChild = c;
+      childDiv.appendChild(btn);
+    });
+
+    stamps.forEach(s => {
+      const btn = document.createElement("button");
+      btn.textContent = s;
+      btn.onclick = () => {
+        if (!selectedChild) return alert("園児を選択");
+        const entry = {
+          child: selectedChild,
+          stamp: s,
+          time: new Date().toLocaleTimeString()
+        };
+        logs.push(entry);
+        localStorage.setItem("logs", JSON.stringify(logs));
+        renderLogs();
+      };
+      stampDiv.appendChild(btn);
+    });
+
+    renderLogs();
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js");
+    }
+  </script>
+</body>
+</html>

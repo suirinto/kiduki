@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>kiduki</title>
+  <link rel="manifest" href="manifest.json" />
+</head>
+<body style="font-family: -apple-system; margin: 0; background:#eef5f1; min-height:100vh;">
+  <div id="recordPage" style="max-width:480px; margin:0 auto; padding:16px 16px 120px 16px; position:relative; top:0;">
+      <div id="summary" style="
+        position:fixed;
+        bottom:0;
+        left:0;
+        right:0;
+        z-index:100;
+        background:#fff;
+        padding:16px 70px 16px 12px;
+        border-top:1px solid #ddd;
+        height:156px;
+        box-sizing:border-box;
+        overflow-y:auto;
+      "></div>
+      <div id="childrenSectionHeader" style="cursor:pointer;">
+          <h2 style="display:flex; align-items:center; gap:8px;">
+            <span id="childrenToggleIcon">−</span>
+            <span>記録する子ども <span style="font-size:12px; color:#888;">（複数選択）</span></span>
+          </h2>
+      </div>
+
+      <div id="childrenSectionBody">
+        <div id="children"></div>
+      </div>
+    <div style="height:12px;"></div>
+
+    <div id="stampsSectionHeader" style="cursor:pointer;">
+        <h2 style="display:flex; align-items:center; gap:8px;">
+          <span id="stampsToggleIcon">＋</span>
+          <span>どんな状況？ <span style="font-size:12px; color:#888;">（1つ選択）</span></span>
+        </h2>
+    </div>
+
+    <div id="stampsSectionBody" style="display:none;">
+      <div id="stamps"></div>
+    </div>
+    <div style="height:12px;"></div>
+
+    <ul id="log"></ul>
+  </div>
+
+  <div id="historyPage" style="display:none; max-width:480px; margin:0 auto; padding:16px 16px 80px 16px;">
+    <h2>📋 記録を見る</h2>
+    <ul id="historyList"></ul>
+  </div>
+
+  <div id="masterPage" style="display:none; max-width:480px; margin:0 auto; padding:16px 16px 80px 16px;">
+    <h2>⚙️ 設定を見る</h2>
+    <p>（ここに園児・スタンプ・補助の管理を追加予定）</p>
+  </div>
+
+  <script>
+    const children = ["Aちゃん", "Bくん", "Cちゃん"];
+    const stamps = ["衝突", "笑う", "一人", "関わり", "困る", "気になる"];
+    const subStamps = ["泣く", "笑う", "困る"];
+
+    const COLORS = {
+      baseBg: "#fff",
+      border: "#ccc",
+      selected: "#d0e8ff" // unified selected color
+    };
+
+    let selectedChildren = new Set();
+    let logs = JSON.parse(localStorage.getItem("logs") || "[]");
+    let sessionLogs = [];
+    
+    let recognition = null;
+
+    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = "ja-JP";
+      recognition.interimResults = false;
+    }
+
+    function startVoiceInput() {
+      if (!recognition) {
+        alert("音声入力に対応していません");
+        return;
+      }
+      recognition.start();
+    }
+
+    if (recognition) {
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+
+        // 👇 簡易要約（まずはこれでOK）
+        let summary = text;
+
+        if (summary.includes("。")) {
+          summary = summary.split("。")[0];
+        }
+
+        if (summary.length > 20) {
+          summary = summary.slice(0, 20);
+        }
+
+        if (!pending) {
+          pending = {
+            children: Array.from(selectedChildren),
+            stamp: null,
+            sub: null,
+            time: new Date().toLocaleString()
+          };
+        }
+
+        pending.memo = summary;
+
+        renderSummary();
+      };
+    }
+
+function formatTime(t) {
+  return t.replace(/^\d{4}\//, "");
+}
+
+    const childDiv = document.getElementById("children");
+    const childrenSectionBody = document.getElementById("childrenSectionBody");
+    const childrenToggleIcon = document.getElementById("childrenToggleIcon");
+    const childrenSectionHeader = document.getElementById("childrenSectionHeader");
+
+    let childrenOpen = true;
+
+    childrenSectionHeader.onclick = () => {
+      childrenOpen = !childrenOpen;
+      childrenSectionBody.style.display = childrenOpen ? "block" : "none";
+      childrenToggleIcon.textContent = childrenOpen ? "−" : "＋";
+    };
+    const stampDiv = document.getElementById("stamps");
+    const stampsSectionBody = document.getElementById("stampsSectionBody");
+    const stampsToggleIcon = document.getElementById("stampsToggleIcon");
+    const stampsSectionHeader = document.getElementById("stampsSectionHeader");
+
+    let stampsOpen = false;
+
+    stampsSectionHeader.onclick = () => {
+      stampsOpen = !stampsOpen;
+
+      stampsSectionBody.style.display = stampsOpen ? "block" : "none";
+      stampsToggleIcon.textContent = stampsOpen ? "−" : "＋";
+
+      // 👉 スタンプ開いたら子ども閉じる
+      if (stampsOpen && childrenOpen) {
+        childrenOpen = false;
+        childrenSectionBody.style.display = "none";
+        childrenToggleIcon.textContent = "＋";
+      }
+    };
+    const logDiv = document.getElementById("log");
+
+    const subStampDiv = document.createElement("div");
+    stampsSectionBody.appendChild(subStampDiv);
+    subStampDiv.style.display = "none";
+
+    // Add a container for target selection UI
+    const targetDiv = document.createElement("div");
+    targetDiv.style.marginTop = "8px";
+    subStampDiv.after(targetDiv);
+
+    let selectedSubStamp = null;
+
+    const saveBtn = document.createElement("button");
+    saveBtn.textContent = "記録する";
+    saveBtn.style.display = "block";
+    saveBtn.style.padding = "10px 20px";
+    saveBtn.style.border = "none";
+    saveBtn.style.borderRadius = "8px";
+    saveBtn.style.cursor = "pointer";
+    saveBtn.style.background = "#ff6b6b";
+    saveBtn.style.color = "#fff";
+    saveBtn.style.fontWeight = "bold";
+    saveBtn.style.boxShadow = "0 2px 4px rgba(0,0,0,0.15)";
+    const summaryEl = document.getElementById("summary");
+    summaryEl.appendChild(saveBtn);
+    saveBtn.style.position = "absolute";
+    saveBtn.style.right = "12px";
+    saveBtn.style.bottom = "10px";
+    saveBtn.style.top = "auto";
+    saveBtn.style.transform = "none";
+    saveBtn.disabled = true;
+    saveBtn.style.background = "#ccc";
+    summaryEl.style.position = "fixed";
+    summaryEl.style.display = "block";
+
+    let pending = null;
+
+function renderLogs() {
+  logDiv.innerHTML = "";
+  sessionLogs.forEach(l => {
+    const li = document.createElement("li");
+    const timeLine = document.createElement("div");
+    timeLine.textContent = formatTime(l.time);
+    timeLine.style.fontSize = "12px";
+    timeLine.style.color = "#666";
+
+    const mainLine = document.createElement("div");
+    const childrenText = Array.isArray(l.children) ? l.children.join(", ") : "";
+    mainLine.textContent = `${childrenText} - ${l.stamp || ""}`;
+    mainLine.style.fontSize = "16px";
+
+    li.appendChild(timeLine);
+    li.appendChild(mainLine);
+    
+    // 🎤 この記録に音声メモ追加
+    const micBtn = document.createElement("button");
+    micBtn.textContent = "🎤";
+    micBtn.style.marginTop = "6px";
+    micBtn.style.padding = "6px 10px";
+    micBtn.style.borderRadius = "8px";
+    micBtn.style.border = "1px solid #ccc";
+    micBtn.style.background = "#fff";
+    micBtn.style.cursor = "pointer";
+
+    micBtn.onclick = () => {
+      if (!recognition) {
+        alert("音声入力に対応していません");
+        return;
+      }
+
+      recognition.start();
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+
+        let summary = text;
+        if (summary.includes("。")) summary = summary.split("。")[0];
+        if (summary.length > 20) summary = summary.slice(0, 20);
+
+        l.memo = summary;
+
+        localStorage.setItem("logs", JSON.stringify(logs));
+        renderLogs();
+      };
+    };
+
+    li.appendChild(micBtn);
+    
+    if (l.memo) {
+      const memoLine = document.createElement("div");
+      memoLine.textContent = `📝 ${l.memo}`;
+      memoLine.style.fontSize = "14px";
+      memoLine.style.color = "#333";
+      memoLine.style.marginTop = "4px";
+      li.appendChild(memoLine);
+    }
+
+    if (l.sub && typeof l.sub === "object") {
+      const subLine = document.createElement("div");
+      if (l.sub.targets && l.sub.targets.length > 0) {
+        subLine.textContent = `┗ ${l.sub.targets.join(", ")} - ${l.sub.type}`;
+      } else {
+        subLine.textContent = `┗ ${l.sub.type}`;
+      }
+      subLine.style.fontSize = "14px";
+      subLine.style.marginLeft = "12px";
+      subLine.style.color = "#444";
+      li.appendChild(subLine);
+    }
+
+    li.style.listStyle = "none";
+    li.style.borderTop = "1px solid #eee";
+    li.style.padding = "10px 0";
+    li.style.marginBottom = "10px";
+    logDiv.appendChild(li);
+  });
+
+  const historyList = document.getElementById("historyList");
+  if (historyList) {
+    historyList.innerHTML = "";
+    logs.forEach(l => {
+      const li = document.createElement("li");
+      const timeLine = document.createElement("div");
+      timeLine.textContent = formatTime(l.time);
+      timeLine.style.fontSize = "12px";
+      timeLine.style.color = "#666";
+
+      const mainLine = document.createElement("div");
+      const childrenText = Array.isArray(l.children) ? l.children.join(", ") : "";
+      mainLine.textContent = `${childrenText} - ${l.stamp || ""}`;
+      mainLine.style.fontSize = "16px";
+
+      li.appendChild(timeLine);
+      li.appendChild(mainLine);
+      
+      // 🎤 この記録に音声メモ追加
+      const micBtn = document.createElement("button");
+      micBtn.textContent = "🎤";
+      micBtn.style.marginTop = "6px";
+      micBtn.style.padding = "6px 10px";
+      micBtn.style.borderRadius = "8px";
+      micBtn.style.border = "1px solid #ccc";
+      micBtn.style.background = "#fff";
+      micBtn.style.cursor = "pointer";
+
+      micBtn.onclick = () => {
+        if (!recognition) {
+          alert("音声入力に対応していません");
+          return;
+        }
+
+        recognition.start();
+
+        recognition.onresult = (event) => {
+          const text = event.results[0][0].transcript;
+
+          let summary = text;
+          if (summary.includes("。")) summary = summary.split("。")[0];
+          if (summary.length > 20) summary = summary.slice(0, 20);
+
+          l.memo = summary;
+
+          localStorage.setItem("logs", JSON.stringify(logs));
+          renderLogs();
+        };
+      };
+
+      li.appendChild(micBtn);
+      
+      if (l.memo) {
+        const memoLine = document.createElement("div");
+        memoLine.textContent = `📝 ${l.memo}`;
+        memoLine.style.fontSize = "14px";
+        memoLine.style.color = "#333";
+        memoLine.style.marginTop = "4px";
+        li.appendChild(memoLine);
+      }
+
+      if (l.sub && typeof l.sub === "object") {
+        const subLine = document.createElement("div");
+        if (l.sub.targets && l.sub.targets.length > 0) {
+          subLine.textContent = `┗ ${l.sub.targets.join(", ")} - ${l.sub.type}`;
+        } else {
+          subLine.textContent = `┗ ${l.sub.type}`;
+        }
+        subLine.style.fontSize = "14px";
+        subLine.style.marginLeft = "12px";
+        subLine.style.color = "#444";
+        li.appendChild(subLine);
+      }
+
+      li.style.listStyle = "none";
+      li.style.borderTop = "1px solid #eee";
+      li.style.padding = "10px 0";
+      li.style.marginBottom = "10px";
+      historyList.appendChild(li);
+    });
+  }
+}
+
+
+    children.forEach(c => {
+      const btn = document.createElement("button");
+      btn.style.margin = "6px";
+      btn.style.padding = "12px 16px";
+      btn.style.fontSize = "16px";
+      btn.style.borderRadius = "8px";
+      btn.style.border = `1px solid ${COLORS.border}`;
+      btn.style.background = COLORS.baseBg;
+      btn.style.boxShadow = "0 1px 2px rgba(0,0,0,0.1)";
+      btn.textContent = c;
+
+      btn.onclick = () => {
+        if (selectedChildren.has(c)) {
+          selectedChildren.delete(c);
+        } else {
+          selectedChildren.add(c);
+        }
+        btn.style.background = selectedChildren.has(c) ? COLORS.selected : COLORS.baseBg;
+        renderSummary();
+      };
+
+      childDiv.appendChild(btn);
+    });
+
+    stamps.forEach(s => {
+      const btn = document.createElement("button");
+      btn.style.margin = "6px";
+      btn.style.padding = "12px 16px";
+      btn.style.fontSize = "16px";
+      btn.style.borderRadius = "8px";
+      btn.style.border = `1px solid ${COLORS.border}`;
+      btn.style.background = COLORS.baseBg;
+      btn.style.boxShadow = "0 1px 2px rgba(0,0,0,0.1)";
+      btn.textContent = s;
+
+      let stampSelected = false;
+
+      btn.onclick = () => {
+        if (selectedChildren.size === 0) return;
+
+        // 👇 これを追加（重要）
+        if (pending && pending.stamp === s) {
+          return;
+        }
+
+        document.querySelectorAll("#stamps button").forEach(b => {
+          b.style.background = COLORS.baseBg;
+        });
+
+        btn.style.background = COLORS.selected;
+
+        pending = {
+          children: Array.from(selectedChildren),
+          stamp: s,
+          sub: null,
+          time: new Date().toLocaleString()
+        };
+
+        // reset sub UI when stamp changes
+        subStampDiv.querySelectorAll("button").forEach(b => {
+          b.style.background = COLORS.baseBg;
+        });
+        selectedSubStamp = null;
+        targetDiv.innerHTML = "";
+
+        subStampDiv.style.display = "block";
+
+        saveBtn.style.display = "block";
+        renderSummary();
+      };
+
+      stampDiv.appendChild(btn);
+    });
+
+    const subTitle = document.createElement("h3");
+    subTitle.innerHTML = "補助記録 <span style='font-size:12px; color:#888;'>（あれば・1つ選択）</span>";
+    subStampDiv.appendChild(subTitle);
+
+    subStamps.forEach(s => {
+      const btn = document.createElement("button");
+      btn.textContent = s;
+      btn.style.margin = "6px";
+      btn.style.padding = "10px 14px";
+      btn.style.fontSize = "14px";
+      btn.style.borderRadius = "8px";
+      btn.style.border = `1px solid ${COLORS.border}`;
+      btn.style.background = COLORS.baseBg;
+
+      btn.onclick = () => {
+        selectedSubStamp = s;
+        subStampDiv.querySelectorAll("button").forEach(b => { b.style.background = COLORS.baseBg; });
+        btn.style.background = COLORS.selected;
+
+        if (pending) {
+            if (pending && pending.sub && pending.sub.type === s) {
+              // 同じボタン → 解除
+              pending.sub = null;
+              targetDiv.innerHTML = "";
+              btn.style.background = COLORS.baseBg;
+            } else {
+              subStampDiv.querySelectorAll("button").forEach(b => {
+                b.style.background = COLORS.baseBg;
+              });
+
+              btn.style.background = COLORS.selected;
+
+              if (pending) {
+                pending.sub = { type: s, targets: new Set() };
+
+                targetDiv.innerHTML = "<div style='margin-bottom:4px;'>誰？（任意）</div>";
+
+                pending.children.forEach(c => {
+                  const b = document.createElement("button");
+                  b.textContent = c;
+                  b.style.margin = "4px";
+                  b.style.padding = "8px 12px";
+                  b.style.borderRadius = "8px";
+                  b.style.background = COLORS.baseBg;
+                  b.style.border = `1px solid ${COLORS.border}`;
+
+                  b.onclick = () => {
+                    if (!pending.sub.targets) pending.sub.targets = new Set();
+
+                    if (pending.sub.targets.has(c)) {
+                      pending.sub.targets.delete(c);
+                      b.style.background = COLORS.baseBg;
+                    } else {
+                      pending.sub.targets.add(c);
+                      b.style.background = COLORS.selected;
+                    }
+                    renderSummary();
+                  };
+
+                  targetDiv.appendChild(b);
+                });
+              }
+            }
+
+            renderSummary();
+
+          // Render target selection (optional)
+          targetDiv.innerHTML = "<div style='margin-bottom:4px;'>誰？（任意）</div>";
+
+          pending.children.forEach(c => {
+            const b = document.createElement("button");
+            b.textContent = c;
+            b.style.margin = "4px";
+            b.style.padding = "8px 12px";
+            b.style.borderRadius = "8px";
+            b.style.background = COLORS.baseBg;
+            b.style.border = `1px solid ${COLORS.border}`;
+
+            b.onclick = () => {
+                if (!pending.sub.targets) pending.sub.targets = new Set();
+
+                if (pending.sub.targets.has(c)) {
+                  pending.sub.targets.delete(c);
+                  b.style.background = COLORS.baseBg;
+                } else {
+                  pending.sub.targets.add(c);
+                  b.style.background = COLORS.selected;
+                }
+              renderSummary();
+            };
+
+            targetDiv.appendChild(b);
+          });
+        }
+        renderSummary();
+      };
+
+      subStampDiv.appendChild(btn);
+    });
+
+    saveBtn.onclick = () => {
+      if (!pending) return;
+
+      const entry = {
+        children: pending.children,
+        stamp: pending.stamp,
+        memo: pending.memo || null,
+        sub: pending.sub
+          ? {
+              type: pending.sub.type,
+              targets: pending.sub.targets ? Array.from(pending.sub.targets) : []
+            }
+          : null,
+        time: pending.time
+      };
+      logs.unshift(entry);
+      sessionLogs.unshift(entry);
+
+      pending = null;
+      selectedChildren.clear();
+      saveBtn.disabled = true;
+
+      // 👉 セクション状態を初期に戻す
+      childrenOpen = true;
+      childrenSectionBody.style.display = "block";
+      childrenToggleIcon.textContent = "−";
+
+      stampsOpen = false;
+      stampsSectionBody.style.display = "none";
+      stampsToggleIcon.textContent = "＋";
+
+      // 補助も閉じる
+      subStampDiv.style.display = "none";
+      
+      document.querySelectorAll("#stamps button").forEach(b => { b.style.background = COLORS.baseBg; });
+      subStampDiv.querySelectorAll("button").forEach(b => { b.style.background = COLORS.baseBg; });
+
+      document.querySelectorAll("#children button").forEach(b => b.style.background = COLORS.baseBg);
+      targetDiv.innerHTML = "";
+
+      localStorage.setItem("logs", JSON.stringify(logs));
+      renderLogs();
+      renderSummary();
+    };
+    // Summary display at top of recordPage
+    function renderSummary() {
+        const summary = document.getElementById("summary");
+        summary.innerHTML = "";
+        
+        const header = document.createElement("div");
+        header.style.display = "flex";
+        header.style.alignItems = "center";
+        header.style.justifyContent = "space-between";
+        header.style.paddingBottom = "8px";
+
+        const title = document.createElement("span");
+        title.textContent = "現在の記録";
+        title.style.fontSize = "12px";
+        title.style.color = "#888";
+
+        header.appendChild(title);
+
+        summary.appendChild(header);
+      
+      summary.appendChild(saveBtn);
+
+      if (selectedChildren.size === 0 && !pending) {
+        const placeholder = document.createElement("div");
+        placeholder.style.height = "24px";
+        summary.appendChild(placeholder);
+
+        saveBtn.disabled = true;
+        return;
+      }
+
+      const mainLine = document.createElement("div");
+      mainLine.style.fontSize = "16px";
+      mainLine.style.whiteSpace = "normal";
+      mainLine.style.overflow = "visible";
+      mainLine.style.paddingRight = "0px";
+      mainLine.style.marginTop = "16px";
+
+      const childrenArr = Array.from(selectedChildren);
+      childrenArr.forEach((c, i) => {
+          const chip = document.createElement("span");
+          chip.style.display = "inline-block";
+          chip.style.padding = "4px 8px";
+          chip.style.marginRight = "6px";
+          chip.style.borderRadius = "12px";
+          chip.style.background = COLORS.selected;
+          chip.style.cursor = "pointer";
+
+          chip.textContent = c + " ×";
+
+          chip.onclick = () => {
+            selectedChildren.delete(c);
+
+            document.querySelectorAll("#children button").forEach(b => {
+              if (b.textContent === c) b.style.background = COLORS.baseBg;
+            });
+
+            // 👉 全部消えたときだけ開く
+            if (selectedChildren.size === 0) {
+              childrenOpen = true;
+              childrenSectionBody.style.display = "block";
+              childrenToggleIcon.textContent = "▼";
+            }
+
+            renderSummary();
+          };
+
+          mainLine.appendChild(chip);
+
+      });
+
+      if (pending && pending.stamp) {
+          mainLine.appendChild(document.createTextNode(" - "));
+
+          const stampWrapper = document.createElement("span");
+          stampWrapper.style.whiteSpace = "nowrap"; // ←これが本質
+
+          const stampText = document.createElement("span");
+          stampText.textContent = pending.stamp;
+          stampText.style.marginLeft = "4px";
+          stampText.style.fontWeight = "500";
+          // Make the stamp text clickable for deletion
+          stampText.style.cursor = "pointer";
+          stampText.onclick = () => {
+            pending = null;
+            targetDiv.innerHTML = "";
+            subStampDiv.style.display = "none";
+            document.querySelectorAll("#stamps button").forEach(b => b.style.background = COLORS.baseBg);
+            subStampDiv.querySelectorAll("button").forEach(b => b.style.background = COLORS.baseBg);
+            renderSummary();
+          };
+
+          const stampX = document.createElement("span");
+          stampX.textContent = " ×";
+          stampX.style.cursor = "pointer";
+          stampX.style.color = "#666";
+
+          stampX.onclick = () => {
+            pending = null;
+            targetDiv.innerHTML = "";
+            subStampDiv.style.display = "none";
+            document.querySelectorAll("#stamps button").forEach(b => b.style.background = COLORS.baseBg);
+            subStampDiv.querySelectorAll("button").forEach(b => b.style.background = COLORS.baseBg);
+            renderSummary();
+          };
+
+          stampWrapper.appendChild(stampText);
+          stampWrapper.appendChild(stampX);
+
+          mainLine.appendChild(stampWrapper);
+      }
+
+      summary.appendChild(mainLine);
+
+      // 📝 メモ表示
+      if (pending && pending.memo) {
+        const memoLine = document.createElement("div");
+        memoLine.textContent = `📝 ${pending.memo}`;
+        memoLine.style.fontSize = "14px";
+        memoLine.style.marginTop = "4px";
+        memoLine.style.color = "#333";
+        summary.appendChild(memoLine);
+      }
+      
+      if (pending && pending.sub) {
+        const subLine = document.createElement("div");
+        subLine.style.fontSize = "14px";
+        subLine.style.marginTop = "4px";
+        subLine.style.color = "#444";
+
+        const subWrapper = document.createElement("span");
+        subWrapper.style.cursor = "pointer";
+
+        if (pending.sub.targets && pending.sub.targets.size > 0) {
+          subWrapper.textContent = `┗ ${Array.from(pending.sub.targets).join(", ")} - ${pending.sub.type} ×`;
+        } else {
+          subWrapper.textContent = `┗ ${pending.sub.type} ×`;
+        }
+
+        // 👇 ここが今回の本質
+        subWrapper.onclick = () => {
+          pending.sub = null;
+          targetDiv.innerHTML = "";
+
+          subStampDiv.querySelectorAll("button").forEach(b => {
+            b.style.background = COLORS.baseBg;
+          });
+
+          renderSummary();
+        };
+
+        subLine.appendChild(subWrapper);
+        summary.appendChild(subLine);
+      }
+      
+      // Save button enabled logic
+      if (selectedChildren.size > 0 && pending && pending.stamp) {
+        saveBtn.disabled = false;
+        saveBtn.style.background = "#ff6b6b";
+      } else {
+        saveBtn.disabled = true;
+        saveBtn.style.background = "#ccc";
+      }
+    }
+
+    renderLogs();
+    renderSummary();
+
+    function clearLogs() {
+      logs = [];
+      localStorage.setItem("logs", JSON.stringify(logs));
+      renderLogs();
+    }
+
+      function showPage(page) {
+        document.getElementById("recordPage").style.display = "none";
+        document.getElementById("historyPage").style.display = "none";
+        document.getElementById("masterPage").style.display = "none";
+
+        if (page === "record") {
+          document.getElementById("recordPage").style.display = "block";
+        }
+
+        if (page === "history") {
+          document.getElementById("historyPage").style.display = "block";
+        }
+
+        if (page === "master") {
+          document.getElementById("masterPage").style.display = "block";
+        }
+      }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const fab = document.getElementById("fabMenu");
+      const panel = document.getElementById("fabPanel");
+
+      if (!fab || !panel) return;
+
+      fab.onclick = () => {
+        panel.style.display = panel.style.display === "block" ? "none" : "block";
+      };
+
+      // close panel when selecting
+      panel.querySelectorAll("button").forEach(b => {
+        b.addEventListener("click", () => {
+          panel.style.display = "none";
+        });
+      });
+    });
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js");
+    }
+    // Ensure always start from top on reload
+    window.addEventListener("load", () => {
+      window.scrollTo(0, 0);
+    });
+    // Disable browser scroll restoration (important for iOS)
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+  </script>
+
+  <button id="fabMenu" style="
+    position:fixed;
+    right:12px;
+    top:12px;
+    z-index:200;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:none;
+    background:#fff;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+    font-size:20px;
+  ">☰</button>
+
+  <div id="fabPanel" style="
+    position:fixed;
+    right:12px;
+    top:64px;
+    display:none;
+    background:#fff;
+    border:1px solid #ddd;
+    border-radius:8px;
+    box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  ">
+  <button onclick="showPage('record')" style="display:block; padding:10px 16px; width:100%; border:none; background:none;">記録する</button>
+  <button onclick="showPage('history')" style="display:block; padding:10px 16px; width:100%; border:none; background:none;">記録を見る</button>
+  <button onclick="showPage('master')" style="display:block; padding:10px 16px; width:100%; border:none; background:none;">設定を見る</button>
+</div>
+</body>
+</html>
