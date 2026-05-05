@@ -61,6 +61,14 @@
   </div>
 
   <script>
+      const PASSCODE = "1234"; // ←好きに変えてOK
+
+      const entered = prompt("パスコードを入力してください");
+
+      if (entered !== PASSCODE) {
+        document.body.innerHTML = "アクセスできません";
+        throw new Error("Invalid passcode");
+      }
     const children = ["Aちゃん", "Bくん", "Cちゃん"];
     const stamps = ["衝突", "笑う", "一人", "関わり", "困る", "気になる"];
     const subStamps = ["泣く", "笑う", "困る"];
