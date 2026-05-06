@@ -83,51 +83,69 @@
     let logs = JSON.parse(localStorage.getItem("logs") || "[]");
     let sessionLogs = [];
     
-    let recognition = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let recordingTarget = null;
 
-    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      recognition = new SpeechRecognition();
-      recognition.lang = "ja-JP";
-      recognition.interimResults = false;
-    }
+    async function startRecording(targetLog, buttonEl) {
+        alert("startRecording called");
+      console.log("startRecording called");
+      try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          alert("このブラウザは録音に対応していません");
+          return;
+        }
+        if (typeof MediaRecorder === "undefined") {
+          alert("MediaRecorderに対応していません");
+          return;
+        }
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    function startVoiceInput() {
-      if (!recognition) {
-        alert("音声入力に対応していません");
-        return;
+        alert("録音開始");
+        console.log("microphone granted");
+
+        mediaRecorder = new MediaRecorder(stream);
+        console.log("MediaRecorder created", mediaRecorder.mimeType);
+        audioChunks = [];
+        recordingTarget = targetLog;
+
+        buttonEl.textContent = "■ 停止";
+        buttonEl.style.background = "#ffd6d6";
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          console.log("recording stopped");
+          alert("録音停止");
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+
+          // 仮実装：録音済みメモとして保存
+          recordingTarget.memo = "🎤 音声メモあり";
+          recordingTarget.audioBlob = audioBlob;
+
+          localStorage.setItem("logs", JSON.stringify(logs));
+
+          buttonEl.textContent = "🎤";
+          buttonEl.style.background = "#fff";
+
+          renderLogs();
+        };
+
+        mediaRecorder.start();
+        console.log("recording started");
+
+      } catch (err) {
+        console.error(err);
+        alert("録音エラー: " + err.message);
       }
-      recognition.start();
     }
 
-    if (recognition) {
-      recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-
-        // 👇 簡易要約（まずはこれでOK）
-        let summary = text;
-
-        if (summary.includes("。")) {
-          summary = summary.split("。")[0];
-        }
-
-        if (summary.length > 20) {
-          summary = summary.slice(0, 20);
-        }
-
-        if (!pending) {
-          pending = {
-            children: Array.from(selectedChildren),
-            stamp: null,
-            sub: null,
-            time: new Date().toLocaleString()
-          };
-        }
-
-        pending.memo = summary;
-
-        renderSummary();
-      };
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
     }
 
 function formatTime(t) {
@@ -232,28 +250,19 @@ function renderLogs() {
     micBtn.style.cursor = "pointer";
 
     micBtn.onclick = () => {
-      if (!recognition) {
-        alert("音声入力に対応していません");
-        return;
+      if (mediaRecorder && mediaRecorder.state === "recording") {
+        stopRecording();
+      } else {
+        startRecording(l, micBtn);
       }
-
-      recognition.start();
-
-      recognition.onresult = (event) => {
-        const text = event.results[0][0].transcript;
-
-        let summary = text;
-        if (summary.includes("。")) summary = summary.split("。")[0];
-        if (summary.length > 20) summary = summary.slice(0, 20);
-
-        l.memo = summary;
-
-        localStorage.setItem("logs", JSON.stringify(logs));
-        renderLogs();
-      };
     };
 
     li.appendChild(micBtn);
+    micBtn.style.cursor = "pointer";
+    if (mediaRecorder && mediaRecorder.state === "recording" && recordingTarget === l) {
+      micBtn.textContent = "■ 停止";
+      micBtn.style.background = "#ffd6d6";
+    }
     
     if (l.memo) {
       const memoLine = document.createElement("div");
@@ -313,28 +322,19 @@ function renderLogs() {
       micBtn.style.cursor = "pointer";
 
       micBtn.onclick = () => {
-        if (!recognition) {
-          alert("音声入力に対応していません");
-          return;
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          stopRecording();
+        } else {
+          startRecording(l, micBtn);
         }
-
-        recognition.start();
-
-        recognition.onresult = (event) => {
-          const text = event.results[0][0].transcript;
-
-          let summary = text;
-          if (summary.includes("。")) summary = summary.split("。")[0];
-          if (summary.length > 20) summary = summary.slice(0, 20);
-
-          l.memo = summary;
-
-          localStorage.setItem("logs", JSON.stringify(logs));
-          renderLogs();
-        };
       };
 
       li.appendChild(micBtn);
+      micBtn.style.cursor = "pointer";
+      if (mediaRecorder && mediaRecorder.state === "recording" && recordingTarget === l) {
+        micBtn.textContent = "■ 停止";
+        micBtn.style.background = "#ffd6d6";
+      }
       
       if (l.memo) {
         const memoLine = document.createElement("div");
