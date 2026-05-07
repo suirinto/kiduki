@@ -235,6 +235,11 @@ function renderLogs() {
     const childrenText = Array.isArray(l.children) ? l.children.join(", ") : "";
     mainLine.textContent = `${childrenText} - ${l.stamp || ""}`;
     mainLine.style.fontSize = "16px";
+    mainLine.style.fontWeight = "600";
+    mainLine.style.lineHeight = "1.5";
+    mainLine.style.paddingRight = "72px";
+    mainLine.style.marginTop = "6px";
+    mainLine.style.wordBreak = "break-word";
 
     li.appendChild(timeLine);
     li.appendChild(mainLine);
@@ -242,12 +247,19 @@ function renderLogs() {
     // 🎤 この記録に音声メモ追加
     const micBtn = document.createElement("button");
     micBtn.textContent = "🎤";
-    micBtn.style.marginTop = "6px";
-    micBtn.style.padding = "6px 10px";
-    micBtn.style.borderRadius = "8px";
-    micBtn.style.border = "1px solid #ccc";
+    micBtn.style.position = "absolute";
+    micBtn.style.top = "16px";
+    micBtn.style.right = "16px";
+    micBtn.style.width = "44px";
+    micBtn.style.height = "44px";
+    micBtn.style.borderRadius = "12px";
+    micBtn.style.border = "1px solid #ddd";
     micBtn.style.background = "#fff";
     micBtn.style.cursor = "pointer";
+    micBtn.style.fontSize = "20px";
+    micBtn.style.display = "flex";
+    micBtn.style.alignItems = "center";
+    micBtn.style.justifyContent = "center";
 
     micBtn.onclick = () => {
       if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -270,6 +282,8 @@ function renderLogs() {
       memoLine.style.fontSize = "14px";
       memoLine.style.color = "#333";
       memoLine.style.marginTop = "4px";
+      memoLine.style.lineHeight = "1.5";
+      memoLine.style.paddingRight = "72px";
       li.appendChild(memoLine);
     }
 
@@ -283,13 +297,18 @@ function renderLogs() {
       subLine.style.fontSize = "14px";
       subLine.style.marginLeft = "12px";
       subLine.style.color = "#444";
+      subLine.style.marginTop = "14px";
+      subLine.style.lineHeight = "1.5";
       li.appendChild(subLine);
     }
 
     li.style.listStyle = "none";
-    li.style.borderTop = "1px solid #eee";
-    li.style.padding = "10px 0";
-    li.style.marginBottom = "10px";
+    li.style.background = "#fff";
+    li.style.borderRadius = "16px";
+    li.style.padding = "16px";
+    li.style.marginBottom = "16px";
+    li.style.boxShadow = "0 1px 4px rgba(0,0,0,0.08)";
+    li.style.position = "relative";
     logDiv.appendChild(li);
   });
 
@@ -307,6 +326,11 @@ function renderLogs() {
       const childrenText = Array.isArray(l.children) ? l.children.join(", ") : "";
       mainLine.textContent = `${childrenText} - ${l.stamp || ""}`;
       mainLine.style.fontSize = "16px";
+      mainLine.style.fontWeight = "600";
+      mainLine.style.lineHeight = "1.5";
+      mainLine.style.paddingRight = "72px";
+      mainLine.style.marginTop = "6px";
+      mainLine.style.wordBreak = "break-word";
 
       li.appendChild(timeLine);
       li.appendChild(mainLine);
@@ -314,12 +338,19 @@ function renderLogs() {
       // 🎤 この記録に音声メモ追加
       const micBtn = document.createElement("button");
       micBtn.textContent = "🎤";
-      micBtn.style.marginTop = "6px";
-      micBtn.style.padding = "6px 10px";
-      micBtn.style.borderRadius = "8px";
-      micBtn.style.border = "1px solid #ccc";
+      micBtn.style.position = "absolute";
+      micBtn.style.top = "16px";
+      micBtn.style.right = "16px";
+      micBtn.style.width = "44px";
+      micBtn.style.height = "44px";
+      micBtn.style.borderRadius = "12px";
+      micBtn.style.border = "1px solid #ddd";
       micBtn.style.background = "#fff";
       micBtn.style.cursor = "pointer";
+      micBtn.style.fontSize = "20px";
+      micBtn.style.display = "flex";
+      micBtn.style.alignItems = "center";
+      micBtn.style.justifyContent = "center";
 
       micBtn.onclick = () => {
         if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -342,6 +373,8 @@ function renderLogs() {
         memoLine.style.fontSize = "14px";
         memoLine.style.color = "#333";
         memoLine.style.marginTop = "4px";
+        memoLine.style.lineHeight = "1.5";
+        memoLine.style.paddingRight = "72px";
         li.appendChild(memoLine);
       }
 
@@ -355,13 +388,18 @@ function renderLogs() {
         subLine.style.fontSize = "14px";
         subLine.style.marginLeft = "12px";
         subLine.style.color = "#444";
+        subLine.style.marginTop = "14px";
+        subLine.style.lineHeight = "1.5";
         li.appendChild(subLine);
       }
 
       li.style.listStyle = "none";
-      li.style.borderTop = "1px solid #eee";
-      li.style.padding = "10px 0";
-      li.style.marginBottom = "10px";
+      li.style.background = "#fff";
+      li.style.borderRadius = "16px";
+      li.style.padding = "16px";
+      li.style.marginBottom = "16px";
+      li.style.boxShadow = "0 1px 4px rgba(0,0,0,0.08)";
+      li.style.position = "relative";
       historyList.appendChild(li);
     });
   }
