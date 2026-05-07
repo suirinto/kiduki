@@ -237,9 +237,9 @@ function renderLogs() {
     mainLine.style.fontSize = "16px";
     mainLine.style.fontWeight = "600";
     mainLine.style.lineHeight = "1.5";
-    mainLine.style.paddingRight = "56px";
     mainLine.style.marginTop = "6px";
     mainLine.style.wordBreak = "break-word";
+    mainLine.style.maxWidth = "calc(100% - 64px)";
 
     li.appendChild(timeLine);
     li.appendChild(mainLine);
@@ -250,8 +250,8 @@ function renderLogs() {
     micBtn.style.position = "absolute";
     micBtn.style.top = "16px";
     micBtn.style.right = "16px";
-    micBtn.style.width = "44px";
-    micBtn.style.height = "44px";
+    micBtn.style.width = "40px";
+    micBtn.style.height = "40px";
     micBtn.style.borderRadius = "12px";
     micBtn.style.border = "1px solid #ddd";
     micBtn.style.background = "#fff";
@@ -260,6 +260,7 @@ function renderLogs() {
     micBtn.style.display = "flex";
     micBtn.style.alignItems = "center";
     micBtn.style.justifyContent = "center";
+    micBtn.style.zIndex = "2";
 
     micBtn.onclick = () => {
       if (mediaRecorder && mediaRecorder.state === "recording") {
@@ -328,9 +329,9 @@ function renderLogs() {
       mainLine.style.fontSize = "16px";
       mainLine.style.fontWeight = "600";
       mainLine.style.lineHeight = "1.5";
-      mainLine.style.paddingRight = "56px";
       mainLine.style.marginTop = "6px";
       mainLine.style.wordBreak = "break-word";
+      mainLine.style.maxWidth = "calc(100% - 64px)";
 
       li.appendChild(timeLine);
       li.appendChild(mainLine);
@@ -341,8 +342,8 @@ function renderLogs() {
       micBtn.style.position = "absolute";
       micBtn.style.top = "16px";
       micBtn.style.right = "16px";
-      micBtn.style.width = "44px";
-      micBtn.style.height = "44px";
+      micBtn.style.width = "40px";
+      micBtn.style.height = "40px";
       micBtn.style.borderRadius = "12px";
       micBtn.style.border = "1px solid #ddd";
       micBtn.style.background = "#fff";
@@ -351,6 +352,7 @@ function renderLogs() {
       micBtn.style.display = "flex";
       micBtn.style.alignItems = "center";
       micBtn.style.justifyContent = "center";
+      micBtn.style.zIndex = "2";
 
       micBtn.onclick = () => {
         if (mediaRecorder && mediaRecorder.state === "recording") {
