@@ -136,7 +136,7 @@
 
             const result = await response.json();
             
-            recordingTarget.memo = "音声メモあり";
+            recordingTarget.memo = result.text;
 
             renderLogs();
 
