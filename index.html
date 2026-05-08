@@ -88,23 +88,24 @@
     let recordingTarget = null;
 
     async function startRecording(targetLog, buttonEl) {
-        alert("startRecording called");
       console.log("startRecording called");
       try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          alert("このブラウザは録音に対応していません");
+          // alert("このブラウザは録音に対応していません");
           return;
         }
         if (typeof MediaRecorder === "undefined") {
-          alert("MediaRecorderに対応していません");
+          // alert("MediaRecorderに対応していません");
           return;
         }
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-        alert("録音開始");
+        // alert("録音開始");
         console.log("microphone granted");
 
-        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder = new MediaRecorder(stream, {
+          mimeType: "audio/mp4"
+        });
         console.log("MediaRecorder created", mediaRecorder.mimeType);
         audioChunks = [];
         recordingTarget = targetLog;
@@ -118,8 +119,8 @@
 
         mediaRecorder.onstop = () => {
           console.log("recording stopped");
-          alert("録音停止");
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+          // alert("録音停止");
+          const audioBlob = new Blob(audioChunks, { type: "audio/mp4" });
 
           // 仮実装：録音済みメモとして保存
           recordingTarget.memo = "🎤 音声メモあり";
@@ -138,7 +139,7 @@
 
       } catch (err) {
         console.error(err);
-        alert("録音エラー: " + err.message);
+        // alert("録音エラー: " + err.message);
       }
     }
 
