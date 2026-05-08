@@ -118,21 +118,39 @@
           audioChunks.push(event.data);
         };
 
-        mediaRecorder.onstop = () => {
-          console.log("recording stopped");
-          // alert("録音停止");
-          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+        mediaRecorder.onstop = async () => {
 
-          // 仮実装：録音済みメモとして保存
-          recordingTarget.memo = "🎤 音声メモあり";
-          recordingTarget.audioBlob = audioBlob;
+          const audioBlob = new Blob(audioChunks, {
+            type: "audio/webm"
+          });
 
-          localStorage.setItem("logs", JSON.stringify(logs));
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "recording.webm");
 
+          try {
+
+            const response = await fetch("/transcribe", {
+              method: "POST",
+              body: formData
+            });
+
+            const result = await response.json();
+            
+            recordingTarget.memo = "音声メモあり";
+
+            renderLogs();
+
+            localStorage.setItem("logs", JSON.stringify(logs));
+
+            console.log(result);
+
+          } catch (err) {
+
+            console.error(err);
+
+          }
           buttonEl.textContent = "🎤";
-          buttonEl.style.background = "#fff";
-
-          renderLogs();
+          buttonEl.style.background = "#f5f5f5";
         };
 
         mediaRecorder.start();

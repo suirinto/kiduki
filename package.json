@@ -1,0 +1,26 @@
+{
+  "name": "kiduki",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suirinto/kiduki.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/suirinto/kiduki/issues"
+  },
+  "homepage": "https://github.com/suirinto/kiduki#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "multer": "^2.1.1",
+    "openai": "^6.37.0"
+  }
+}
