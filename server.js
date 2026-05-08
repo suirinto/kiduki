@@ -44,10 +44,31 @@ app.post("/transcribe", upload.single("audio"), async (req, res) => {
 
     console.log(transcription.text);
 
-    res.json({
-      ok: true,
-      text: transcription.text
-    });
+const summaryResponse = await openai.chat.completions.create({
+  model: "gpt-4.1-mini",
+  messages: [
+    {
+      role: "system",
+      content:
+        "あなたは保育記録補助AIです。保育士の音声メモを、短く自然な保育記録風の一文に要約してください。20文字〜40文字程度。断定しすぎず、観察表現を使ってください。"
+    },
+    {
+      role: "user",
+      content: transcription.text
+    }
+  ]
+});
+
+const summary =
+  summaryResponse.choices[0].message.content;
+
+console.log(summary);
+
+res.json({
+  ok: true,
+  transcript: transcription.text,
+  summary: summary
+});
 
   } catch (err) {
     console.error(err);
