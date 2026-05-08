@@ -497,6 +497,9 @@ function renderLogs() {
       btn.style.border = `1px solid ${COLORS.border}`;
       btn.style.background = COLORS.baseBg;
       btn.style.color = "#3a2f2a";
+      btn.style.webkitTextFillColor = "#3a2f2a";
+      btn.style.appearance = "none";
+      btn.style.webkitAppearance = "none";
       btn.style.boxShadow = "0 1px 2px rgba(0,0,0,0.1)";
       btn.textContent = c;
 
@@ -522,6 +525,9 @@ function renderLogs() {
       btn.style.border = `1px solid ${COLORS.border}`;
       btn.style.background = COLORS.baseBg;
       btn.style.color = "#3a2f2a";
+      btn.style.webkitTextFillColor = "#3a2f2a";
+      btn.style.appearance = "none";
+      btn.style.webkitAppearance = "none";
       btn.style.boxShadow = "0 1px 2px rgba(0,0,0,0.1)";
       btn.textContent = s;
 
@@ -578,6 +584,9 @@ function renderLogs() {
       btn.style.border = `1px solid ${COLORS.border}`;
       btn.style.background = COLORS.baseBg;
       btn.style.color = "#3a2f2a";
+      btn.style.webkitTextFillColor = "#3a2f2a";
+      btn.style.appearance = "none";
+      btn.style.webkitAppearance = "none";
 
       btn.onclick = () => {
         selectedSubStamp = s;
@@ -591,6 +600,7 @@ function renderLogs() {
               targetDiv.innerHTML = "";
               btn.style.background = COLORS.baseBg;
               btn.style.color = "#3a2f2a";
+              btn.style.webkitTextFillColor = "#3a2f2a";
             } else {
               subStampDiv.querySelectorAll("button").forEach(b => {
                 b.style.background = COLORS.baseBg;
@@ -611,6 +621,10 @@ function renderLogs() {
                   b.style.borderRadius = "8px";
                   b.style.background = COLORS.baseBg;
                   b.style.border = `1px solid ${COLORS.border}`;
+                  b.style.color = "#3a2f2a";
+                  b.style.webkitTextFillColor = "#3a2f2a";
+                  b.style.appearance = "none";
+                  b.style.webkitAppearance = "none";
 
                   b.onclick = () => {
                     if (!pending.sub.targets) pending.sub.targets = new Set();
@@ -643,6 +657,10 @@ function renderLogs() {
             b.style.borderRadius = "8px";
             b.style.background = COLORS.baseBg;
             b.style.border = `1px solid ${COLORS.border}`;
+            b.style.color = "#3a2f2a";
+            b.style.webkitTextFillColor = "#3a2f2a";
+            b.style.appearance = "none";
+            b.style.webkitAppearance = "none";
 
             b.onclick = () => {
                 if (!pending.sub.targets) pending.sub.targets = new Set();
@@ -943,6 +961,8 @@ function renderLogs() {
     border-radius:50%;
     border:none;
     background:#fff;
+    color:#3a2f2a;
+    -webkit-text-fill-color:#3a2f2a;
     box-shadow:0 2px 6px rgba(0,0,0,0.2);
     font-size:20px;
   ">☰</button>
