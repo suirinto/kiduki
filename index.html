@@ -249,16 +249,17 @@ function renderLogs() {
     // 🎤 この記録に音声メモ追加
     const micBtn = document.createElement("button");
     micBtn.textContent = "🎤";
-    micBtn.style.width = "40px";
-    micBtn.style.height = "40px";
-    micBtn.style.borderRadius = "12px";
-    micBtn.style.border = "1px solid #ddd";
-    micBtn.style.background = "#fff";
+    micBtn.style.width = "32px";
+    micBtn.style.height = "32px";
+    micBtn.style.borderRadius = "8px";
+    micBtn.style.border = "none";
+    micBtn.style.background = "#f3f3f3";
     micBtn.style.cursor = "pointer";
-    micBtn.style.fontSize = "20px";
+    micBtn.style.fontSize = "16px";
     micBtn.style.display = "flex";
     micBtn.style.alignItems = "center";
     micBtn.style.justifyContent = "center";
+    micBtn.style.opacity = "0.75";
 
     micBtn.onclick = () => {
       if (mediaRecorder && mediaRecorder.state === "recording") {
