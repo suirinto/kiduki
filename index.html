@@ -79,6 +79,8 @@
       selected: "#d0e8ff" // unified selected color
     };
 
+    let currentStream = null;
+      
     let selectedChildren = new Set();
     let logs = JSON.parse(localStorage.getItem("logs") || "[]");
     let sessionLogs = [];
@@ -98,7 +100,8 @@
           // alert("MediaRecorderに対応していません");
           return;
         }
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        currentStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const stream = currentStream;
 
         // alert("録音開始");
         console.log("microphone granted");
@@ -141,11 +144,16 @@
       }
     }
 
-    function stopRecording() {
-      if (mediaRecorder && mediaRecorder.state === "recording") {
-        mediaRecorder.stop();
+      function stopRecording() {
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+        }
+
+        if (currentStream) {
+          currentStream.getTracks().forEach(track => track.stop());
+          currentStream = null;
+        }
       }
-    }
 
 function formatTime(t) {
   return t.replace(/^\d{4}\//, "");
