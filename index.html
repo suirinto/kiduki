@@ -231,12 +231,6 @@ function renderLogs() {
     timeLine.style.fontSize = "12px";
     timeLine.style.color = "#666";
 
-    const topRow = document.createElement("div");
-    topRow.style.display = "flex";
-    topRow.style.alignItems = "flex-start";
-    topRow.style.justifyContent = "space-between";
-    topRow.style.gap = "12px";
-    topRow.style.marginTop = "6px";
 
     const mainLine = document.createElement("div");
     const childrenText = Array.isArray(l.children) ? l.children.join(", ") : "";
@@ -249,7 +243,8 @@ function renderLogs() {
     mainLine.style.minWidth = "0";
 
     li.appendChild(timeLine);
-    // topRow will contain mainLine and micBtn
+    mainLine.style.marginTop = "6px";
+    li.appendChild(mainLine);
     
     // 🎤 この記録に音声メモ追加
     const micBtn = document.createElement("button");
@@ -273,15 +268,17 @@ function renderLogs() {
       }
     };
 
-    topRow.appendChild(mainLine);
-    topRow.appendChild(micBtn);
-    li.appendChild(topRow);
+    // micBtn below main text
     micBtn.style.cursor = "pointer";
+    micBtn.style.marginTop = "10px";
+    micBtn.style.marginLeft = "auto";
     if (mediaRecorder && mediaRecorder.state === "recording" && recordingTarget === l) {
       micBtn.textContent = "■ 停止";
       micBtn.style.background = "#ffd6d6";
     }
-    
+
+    li.appendChild(micBtn);
+
     if (l.memo) {
       const memoLine = document.createElement("div");
       memoLine.textContent = `📝 ${l.memo}`;
@@ -328,12 +325,6 @@ function renderLogs() {
       timeLine.style.fontSize = "12px";
       timeLine.style.color = "#666";
 
-      const topRow = document.createElement("div");
-      topRow.style.display = "flex";
-      topRow.style.alignItems = "flex-start";
-      topRow.style.justifyContent = "space-between";
-      topRow.style.gap = "12px";
-      topRow.style.marginTop = "6px";
 
       const mainLine = document.createElement("div");
       const childrenText = Array.isArray(l.children) ? l.children.join(", ") : "";
@@ -346,7 +337,8 @@ function renderLogs() {
       mainLine.style.minWidth = "0";
 
       li.appendChild(timeLine);
-      // topRow will contain mainLine and micBtn
+      mainLine.style.marginTop = "6px";
+      li.appendChild(mainLine);
       
       // 🎤 この記録に音声メモ追加
       const micBtn = document.createElement("button");
@@ -370,15 +362,17 @@ function renderLogs() {
         }
       };
 
-      topRow.appendChild(mainLine);
-      topRow.appendChild(micBtn);
-      li.appendChild(topRow);
+      // micBtn below main text
       micBtn.style.cursor = "pointer";
+      micBtn.style.marginTop = "10px";
+      micBtn.style.marginLeft = "auto";
       if (mediaRecorder && mediaRecorder.state === "recording" && recordingTarget === l) {
         micBtn.textContent = "■ 停止";
         micBtn.style.background = "#ffd6d6";
       }
-      
+
+      li.appendChild(micBtn);
+
       if (l.memo) {
         const memoLine = document.createElement("div");
         memoLine.textContent = `📝 ${l.memo}`;
