@@ -103,9 +103,7 @@
         // alert("録音開始");
         console.log("microphone granted");
 
-        mediaRecorder = new MediaRecorder(stream, {
-          mimeType: "audio/mp4"
-        });
+        mediaRecorder = new MediaRecorder(stream);
         console.log("MediaRecorder created", mediaRecorder.mimeType);
         audioChunks = [];
         recordingTarget = targetLog;
@@ -120,7 +118,7 @@
         mediaRecorder.onstop = () => {
           console.log("recording stopped");
           // alert("録音停止");
-          const audioBlob = new Blob(audioChunks, { type: "audio/mp4" });
+          const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
 
           // 仮実装：録音済みメモとして保存
           recordingTarget.memo = "🎤 音声メモあり";
