@@ -278,8 +278,6 @@ function renderLogs() {
       micBtn.style.background = "#ffd6d6";
     }
 
-    li.appendChild(micBtn);
-
     if (l.memo) {
       const memoLine = document.createElement("div");
       memoLine.textContent = `📝 ${l.memo}`;
@@ -303,7 +301,23 @@ function renderLogs() {
       subLine.style.color = "#444";
       subLine.style.marginTop = "14px";
       subLine.style.lineHeight = "1.5";
-      li.appendChild(subLine);
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.alignItems = "flex-end";
+      row.style.justifyContent = "space-between";
+      row.style.gap = "12px";
+
+      subLine.style.flex = "1";
+
+      row.appendChild(subLine);
+      row.appendChild(micBtn);
+
+      li.appendChild(row);
+    }
+    else {
+      micBtn.style.marginTop = "16px";
+      micBtn.style.marginLeft = "auto";
+      li.appendChild(micBtn);
     }
 
     li.style.listStyle = "none";
@@ -372,8 +386,6 @@ function renderLogs() {
         micBtn.style.background = "#ffd6d6";
       }
 
-      li.appendChild(micBtn);
-
       if (l.memo) {
         const memoLine = document.createElement("div");
         memoLine.textContent = `📝 ${l.memo}`;
@@ -397,7 +409,23 @@ function renderLogs() {
         subLine.style.color = "#444";
         subLine.style.marginTop = "14px";
         subLine.style.lineHeight = "1.5";
-        li.appendChild(subLine);
+        const row = document.createElement("div");
+        row.style.display = "flex";
+        row.style.alignItems = "flex-end";
+        row.style.justifyContent = "space-between";
+        row.style.gap = "12px";
+
+        subLine.style.flex = "1";
+
+        row.appendChild(subLine);
+        row.appendChild(micBtn);
+
+        li.appendChild(row);
+      }
+      else {
+        micBtn.style.marginTop = "16px";
+        micBtn.style.marginLeft = "auto";
+        li.appendChild(micBtn);
       }
 
       li.style.listStyle = "none";
