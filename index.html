@@ -155,7 +155,9 @@
 
           try {
 
-            const response = await fetch("/transcribe", {
+              const response = await fetch(
+                "https://kiduki-server.onrender.com/transcribe",
+                {
               method: "POST",
               body: formData
             });
