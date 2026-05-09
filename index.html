@@ -162,7 +162,8 @@
 
             const result = await response.json();
             
-            recordingTarget.memo = result.text;
+            recordingTarget.memo = result.summary;
+            recordingTarget.transcript = result.transcript;
 
             renderLogs();
 
@@ -327,17 +328,6 @@ function renderLogs() {
       micBtn.style.background = "#ffd6d6";
     }
 
-    if (l.memo) {
-      const memoLine = document.createElement("div");
-      memoLine.textContent = `📝 ${l.memo}`;
-      memoLine.style.fontSize = "14px";
-      memoLine.style.color = "#333";
-      memoLine.style.marginTop = "4px";
-      memoLine.style.lineHeight = "1.5";
-      memoLine.style.paddingRight = "72px";
-      li.appendChild(memoLine);
-    }
-
     if (l.sub && typeof l.sub === "object") {
       const subLine = document.createElement("div");
       if (l.sub.targets && l.sub.targets.length > 0) {
@@ -374,6 +364,54 @@ function renderLogs() {
       micBtn.style.marginTop = "16px";
       micBtn.style.marginLeft = "auto";
       li.appendChild(micBtn);
+    }
+    
+    if (l.memo) {
+
+      const memoLine = document.createElement("div");
+      memoLine.textContent = `📝 ${l.memo}`;
+      memoLine.style.fontSize = "14px";
+      memoLine.style.color = "#333";
+      memoLine.style.marginTop = "10px";
+      memoLine.style.lineHeight = "1.5";
+      memoLine.style.paddingRight = "72px";
+
+      li.appendChild(memoLine);
+
+      if (l.transcript) {
+
+        const toggle = document.createElement("div");
+        toggle.textContent = "▼ 音声メモ全文";
+        toggle.style.fontSize = "11px";
+        toggle.style.color = "#aaa";
+        toggle.style.marginTop = "6px";
+        toggle.style.cursor = "pointer";
+
+        const transcriptLine = document.createElement("div");
+        transcriptLine.textContent = l.transcript;
+        transcriptLine.style.display = "none";
+        transcriptLine.style.fontSize = "13px";
+        transcriptLine.style.color = "#666";
+        transcriptLine.style.lineHeight = "1.5";
+        transcriptLine.style.marginTop = "6px";
+
+        toggle.onclick = () => {
+
+          const open =
+            transcriptLine.style.display === "block";
+
+          transcriptLine.style.display =
+            open ? "none" : "block";
+
+          toggle.textContent =
+            open
+              ? "▼ 音声メモ全文"
+              : "▲ 閉じる";
+        };
+
+        li.appendChild(toggle);
+        li.appendChild(transcriptLine);
+      }
     }
 
     li.style.listStyle = "none";
@@ -440,17 +478,6 @@ function renderLogs() {
         micBtn.style.background = "#ffd6d6";
       }
 
-      if (l.memo) {
-        const memoLine = document.createElement("div");
-        memoLine.textContent = `📝 ${l.memo}`;
-        memoLine.style.fontSize = "14px";
-        memoLine.style.color = "#333";
-        memoLine.style.marginTop = "4px";
-        memoLine.style.lineHeight = "1.5";
-        memoLine.style.paddingRight = "72px";
-        li.appendChild(memoLine);
-      }
-
       if (l.sub && typeof l.sub === "object") {
         const subLine = document.createElement("div");
         if (l.sub.targets && l.sub.targets.length > 0) {
@@ -489,6 +516,54 @@ function renderLogs() {
         li.appendChild(micBtn);
       }
 
+      if (l.memo) {
+
+        const memoLine = document.createElement("div");
+        memoLine.textContent = `📝 ${l.memo}`;
+        memoLine.style.fontSize = "14px";
+        memoLine.style.color = "#333";
+        memoLine.style.marginTop = "10px";
+        memoLine.style.lineHeight = "1.5";
+        memoLine.style.paddingRight = "72px";
+
+        li.appendChild(memoLine);
+
+        if (l.transcript) {
+
+          const toggle = document.createElement("div");
+          toggle.textContent = "▼ 音声メモ全文";
+          toggle.style.fontSize = "11px";
+          toggle.style.color = "#aaa";
+          toggle.style.marginTop = "6px";
+          toggle.style.cursor = "pointer";
+
+          const transcriptLine = document.createElement("div");
+          transcriptLine.textContent = l.transcript;
+          transcriptLine.style.display = "none";
+          transcriptLine.style.fontSize = "13px";
+          transcriptLine.style.color = "#666";
+          transcriptLine.style.lineHeight = "1.5";
+          transcriptLine.style.marginTop = "6px";
+
+          toggle.onclick = () => {
+
+            const open =
+              transcriptLine.style.display === "block";
+
+            transcriptLine.style.display =
+              open ? "none" : "block";
+
+            toggle.textContent =
+              open
+                ? "▼ 音声メモ全文"
+                : "▲ 閉じる";
+          };
+
+          li.appendChild(toggle);
+          li.appendChild(transcriptLine);
+        }
+      }
+      
       li.style.listStyle = "none";
       li.style.background = "#fff";
       li.style.borderRadius = "16px";
@@ -719,7 +794,10 @@ function renderLogs() {
 
       pending = null;
       selectedChildren.clear();
+
       saveBtn.disabled = true;
+      saveBtn.style.background = "#d8cfc8";
+      saveBtn.style.cursor = "default";
 
       // 👉 セクション状態を初期に戻す
       childrenOpen = true;
@@ -902,9 +980,11 @@ function renderLogs() {
       if (selectedChildren.size > 0 && pending && pending.stamp) {
         saveBtn.disabled = false;
         saveBtn.style.background = "#e87c74";
+        saveBtn.style.cursor = "pointer";
       } else {
         saveBtn.disabled = true;
         saveBtn.style.background = "#d8cfc8";
+        saveBtn.style.cursor = "default";
       }
     }
 
