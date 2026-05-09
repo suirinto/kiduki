@@ -77,8 +77,16 @@
   </div>
 
   <div id="historyPage" style="display:none; width:100%; margin:0; padding:16px 8px 80px 8px; box-sizing:border-box;">
-    <h2>📋 記録を見る</h2>
-    <ul id="historyList"></ul>
+      <h2>📋 記録を見る</h2>
+
+      <div id="historyFilters" style="
+        display:flex;
+        flex-wrap:wrap;
+        gap:8px;
+        margin-bottom:16px;
+      "></div>
+
+      <ul id="historyList"></ul>
   </div>
 
   <div id="masterPage" style="display:none; max-width:480px; margin:0 auto; padding:16px 16px 80px 16px;">
@@ -110,6 +118,7 @@
     let selectedChildren = new Set();
     let logs = JSON.parse(localStorage.getItem("logs") || "[]");
     let sessionLogs = [];
+    let selectedHistoryChild = null;
     
     let mediaRecorder = null;
     let audioChunks = [];
@@ -427,9 +436,77 @@ function renderLogs() {
   });
 
   const historyList = document.getElementById("historyList");
+  const historyFilters =
+    document.getElementById("historyFilters");
+
+  if (historyFilters) {
+
+    historyFilters.innerHTML = "";
+
+    const allBtn = document.createElement("button");
+    allBtn.textContent = "全員";
+
+    allBtn.style.padding = "8px 12px";
+    allBtn.style.borderRadius = "999px";
+    allBtn.style.border = "none";
+    allBtn.style.cursor = "pointer";
+
+    allBtn.style.background =
+      selectedHistoryChild === null
+        ? COLORS.selected
+        : "#fff";
+
+    allBtn.onclick = () => {
+      selectedHistoryChild = null;
+      renderLogs();
+    };
+
+    historyFilters.appendChild(allBtn);
+
+    children.forEach(c => {
+
+      const btn = document.createElement("button");
+
+      btn.textContent = c;
+
+      btn.style.padding = "8px 12px";
+      btn.style.borderRadius = "999px";
+      btn.style.border = "none";
+      btn.style.cursor = "pointer";
+
+      btn.style.background =
+        selectedHistoryChild === c
+          ? COLORS.selected
+          : "#fff";
+
+      btn.onclick = () => {
+        selectedHistoryChild = c;
+        renderLogs();
+      };
+
+      historyFilters.appendChild(btn);
+    });
+  }
   if (historyList) {
     historyList.innerHTML = "";
-    logs.forEach(l => {
+    
+    const filteredLogs =
+      selectedHistoryChild
+        ? logs.filter(l => {
+
+            const mainMatch =
+              l.children.includes(selectedHistoryChild);
+
+            const subMatch =
+              l.sub &&
+              l.sub.targets &&
+              l.sub.targets.includes(selectedHistoryChild);
+
+            return mainMatch || subMatch;
+          })
+        : logs;
+    
+    filteredLogs.forEach(l => {
       const li = document.createElement("li");
       const timeLine = document.createElement("div");
       timeLine.textContent = formatTime(l.time);
